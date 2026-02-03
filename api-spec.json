@@ -1,0 +1,243 @@
+{
+  "name": "OpenMarket API",
+  "description": "REST API for OpenMarket marketplace frontend. MongoDB backend. No payment endpoints.",
+  "baseUrl": "/api",
+  "version": "1.0.0",
+
+  "collections": {
+    "users": {
+      "description": "Registered users (buyers/sellers)",
+      "schema": {
+        "username": "string (required, unique)",
+        "email": "string (required, unique)",
+        "passwordHash": "string (required, do not return in responses)",
+        "verified": "boolean (default false)",
+        "rating": "number (default 0, computed from seller ratings or stored)",
+        "registrationType": "string (optional: quick | full | company)",
+        "name": "string (optional)",
+        "middleName": "string (optional)",
+        "surname": "string (optional)",
+        "age": "number (optional)",
+        "area": "string (optional)",
+        "cellNumber": "string (optional)",
+        "idNumber": "string (optional)",
+        "passportNumber": "string (optional)",
+        "idType": "string (optional: id | passport)",
+        "location": "string (optional)",
+        "idFileUrl": "string (optional)",
+        "companyName": "string (optional)",
+        "companyNumber": "string (optional)",
+        "companyContact": "string (optional)",
+        "companyAddress": "string (optional)",
+        "companyEmail": "string (optional)",
+        "companyWebsite": "string (optional)",
+        "bio": "string (optional)",
+        "canBecomeVerifiedSeller": "boolean (optional)",
+        "createdAt": "date",
+        "updatedAt": "date"
+      }
+    },
+    "listings": {
+      "description": "Product/listings for sale",
+      "schema": {
+        "title": "string (required)",
+        "price": "number (required)",
+        "category": "string (required). One of: Electronics, Fashion, Furniture, Sports, Entertainment, Books",
+        "description": "string (required)",
+        "images": "array of strings (image URLs or base64 data URLs, required, at least one)",
+        "sellerId": "ObjectId ref users (required)",
+        "createdAt": "date",
+        "updatedAt": "date"
+      }
+    },
+    "ratings": {
+      "description": "Seller and product ratings/reviews",
+      "schema": {
+        "type": "string (required: seller | product)",
+        "fromUserId": "ObjectId ref users (required)",
+        "toUserId": "ObjectId ref users (required when type=seller)",
+        "productId": "ObjectId ref listings (required when type=product)",
+        "fromUsername": "string (required, can be denormalized from user)",
+        "rating": "number (required, 1-5)",
+        "comment": "string (optional)",
+        "createdAt": "date"
+      }
+    }
+  },
+
+  "endpoints": [
+
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "summary": "Login with email and password",
+      "body": { "email": "string", "password": "string" },
+      "response": "{ user: User (no password), token: string }. User: { id, username, email, verified, rating }.",
+      "notes": "Return 401 if invalid. Frontend stores token in localStorage (openmarket_token) and user (openmarket_user)."
+    },
+    {
+      "method": "POST",
+      "path": "/auth/register",
+      "summary": "Register new user",
+      "body": "User fields: email, password, registrationType (quick|full|company), and type-specific fields (name, surname, etc.). See users schema.",
+      "response": "{ user: User (no password), token: string }. Same as login.",
+      "notes": "Validate unique email/username. Hash password server-side."
+    },
+    {
+      "method": "GET",
+      "path": "/auth/me",
+      "summary": "Get current user from token",
+      "headers": "Authorization: Bearer <token>",
+      "response": "User object or 401"
+    },
+
+    {
+      "method": "GET",
+      "path": "/users/:id",
+      "summary": "Get user by ID",
+      "response": "User (no password). Include computed rating from ratings if not stored.",
+      "auth": "Optional"
+    },
+    {
+      "method": "GET",
+      "path": "/users/username/:username",
+      "summary": "Get user by username",
+      "response": "User (no password)",
+      "auth": "Optional"
+    },
+    {
+      "method": "PATCH",
+      "path": "/users/:id",
+      "summary": "Update profile (settings)",
+      "headers": "Authorization required",
+      "body": "Partial: username, email, bio, etc. (no password here)",
+      "response": "Updated user",
+      "notes": "Only allow user to update own profile."
+    },
+    {
+      "method": "PATCH",
+      "path": "/users/:id/password",
+      "summary": "Change password",
+      "headers": "Authorization required",
+      "body": { "currentPassword": "string", "newPassword": "string" },
+      "response": "204 or 400 if current password wrong"
+    },
+
+    {
+      "method": "GET",
+      "path": "/listings",
+      "summary": "List listings with filters and sort",
+      "query": {
+        "search": "string (optional, search title/description)",
+        "category": "string (optional)",
+        "sort": "string (optional: newest | price-low | price-high)",
+        "limit": "number (optional, default 50)",
+        "offset": "number (optional, default 0)"
+      },
+      "response": "{ list: Listing[], total: number }. Each listing optionally populated with seller: { id, username, verified, rating }."
+    },
+    {
+      "method": "GET",
+      "path": "/listings/featured",
+      "summary": "Featured listings for homepage",
+      "query": { "limit": "number (optional, default 6)" },
+      "response": "Listing[] with seller populated"
+    },
+    {
+      "method": "GET",
+      "path": "/listings/:id",
+      "summary": "Get single listing by ID",
+      "response": "Listing with seller object populated. 404 if not found."
+    },
+    {
+      "method": "GET",
+      "path": "/listings/seller/:sellerId",
+      "summary": "Listings by seller",
+      "response": "Listing[] with seller populated"
+    },
+    {
+      "method": "POST",
+      "path": "/listings",
+      "summary": "Create listing",
+      "headers": "Authorization required",
+      "body": "title, price, category, description, images (array of image URLs or base64 data URLs). sellerId from token.",
+      "response": "Created listing",
+      "notes": "Frontend uploads via POST /upload when available and sends returned URLs; otherwise sends base64 data URLs. Backend can accept either."
+    },
+    {
+      "method": "PATCH",
+      "path": "/listings/:id",
+      "summary": "Update listing",
+      "headers": "Authorization required",
+      "body": "Partial listing fields",
+      "response": "Updated listing. 403 if not owner."
+    },
+    {
+      "method": "DELETE",
+      "path": "/listings/:id",
+      "summary": "Delete listing",
+      "headers": "Authorization required",
+      "response": "204. 403 if not owner."
+    },
+    {
+      "method": "POST",
+      "path": "/upload",
+      "summary": "Upload images (multipart/form-data)",
+      "headers": "Authorization required. Content-Type: multipart/form-data",
+      "body": "FormData with field 'images' (multiple files). Accept: image/jpeg, image/png, image/webp, image/gif",
+      "response": "{ urls: string[] } — public URLs for uploaded images. Store files (e.g. S3, Cloudinary, local) and return URLs.",
+      "notes": "Optional. If not implemented, frontend sends base64 data URLs in POST /listings body."
+    },
+
+    {
+      "method": "GET",
+      "path": "/ratings/seller/:userId",
+      "summary": "All ratings for a seller",
+      "response": "Rating[] where type=seller and toUserId=userId"
+    },
+    {
+      "method": "GET",
+      "path": "/ratings/product/:productId",
+      "summary": "All ratings for a product/listing",
+      "response": "Rating[] where type=product and productId=productId"
+    },
+    {
+      "method": "GET",
+      "path": "/ratings/average/seller/:userId",
+      "summary": "Average rating for seller",
+      "response": "{ average: number, count: number }"
+    },
+    {
+      "method": "GET",
+      "path": "/ratings/check/seller",
+      "summary": "Check if current user already rated seller",
+      "query": { "fromUserId": "string", "toUserId": "string" },
+      "response": "Rating or null. Used to show/hide Rate Seller form."
+    },
+    {
+      "method": "GET",
+      "path": "/ratings/check/product",
+      "summary": "Check if current user already rated product",
+      "query": { "fromUserId": "string", "productId": "string" },
+      "response": "Rating or null"
+    },
+    {
+      "method": "POST",
+      "path": "/ratings",
+      "summary": "Create seller or product rating",
+      "headers": "Authorization required",
+      "body": "type (seller|product), toUserId (seller), productId (product), rating (1-5), comment (optional). fromUserId/fromUsername from token.",
+      "response": "Created rating. 400 if already rated."
+    }
+  ],
+
+  "categories": ["Electronics", "Fashion", "Furniture", "Sports", "Entertainment", "Books"],
+
+  "implementation_notes": {
+    "auth": "Use JWT in Authorization header or httpOnly cookie. Frontend will send Authorization: Bearer <token> and store token (e.g. localStorage) on login/register.",
+    "ids": "Use MongoDB ObjectId. Return as string in JSON for frontend.",
+    "images": "POST /upload: multipart form with 'images' field; return { urls: string[] }. Or accept base64 data URLs in POST /listings. Consider cloud storage (S3, Cloudinary) for uploads.",
+    "cors": "Allow frontend origin (e.g. http://localhost:5173).",
+    "payment": "Payment is out of scope. No payment or subscription endpoints required."
+  }
+}

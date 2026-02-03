@@ -1,0 +1,19 @@
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  margin: 2rem 0;
+}
+
+.text {
+  color: var(--secondary);
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+

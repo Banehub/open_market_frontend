@@ -1,0 +1,53 @@
+.ratingList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ratingItem {
+  padding: 1.5rem;
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.ratingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.username {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.date {
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+
+.comment {
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--secondary);
+  font-size: 1rem;
+}
+
