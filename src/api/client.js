@@ -7,6 +7,28 @@ const getBaseUrl = () => import.meta.env.VITE_API_BASE_URL || ''
 
 const getToken = () => localStorage.getItem('openmarket_token')
 
+/**
+ * Resolve image URLs so they work in production. The backend may return
+ * localhost URLs (e.g. http://localhost:10000/uploads/...). Rewrite those
+ * to use the same origin as the API so images load on the deployed site.
+ */
+export function toImageUrl(url) {
+  if (!url || typeof url !== 'string') return url
+  const base = getBaseUrl()
+  if (!base) return url
+  try {
+    if (url.startsWith('http://localhost') || url.startsWith('https://localhost')) {
+      const parsed = new URL(url)
+      const origin = new URL(base).origin
+      return origin + parsed.pathname
+    }
+    if (url.startsWith('/')) {
+      return new URL(base).origin + url
+    }
+  } catch (_) {}
+  return url
+}
+
 async function request(path, options = {}) {
   const url = `${getBaseUrl()}${path}`
   const headers = {

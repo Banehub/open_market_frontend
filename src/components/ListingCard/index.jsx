@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { toImageUrl } from '../../api'
 import VerifiedBadge from '../VerifiedBadge'
 import styles from './index.module.css'
 
@@ -8,7 +9,7 @@ function ListingCard({ id, title, price, image, seller, verified }) {
   return (
     <Link to={`/listing/${id}`} className={styles.card}>
       <div className={styles.imageContainer}>
-        <img src={image || PLACEHOLDER_IMAGE} alt={title || 'Listing'} className={styles.image} />
+        <img src={toImageUrl(image) || PLACEHOLDER_IMAGE} alt={title || 'Listing'} className={styles.image} />
       </div>
       <div className={styles.content}>
         <h3 className={styles.title}>{title}</h3>

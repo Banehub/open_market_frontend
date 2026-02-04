@@ -1,4 +1,4 @@
-export { api } from './client'
+export { api, toImageUrl } from './client'
 export * from './auth'
 export * from './users'
 export * from './listings'

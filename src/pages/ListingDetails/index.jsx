@@ -14,6 +14,7 @@ import {
   checkRatedProduct,
   checkRatedSeller,
   createRating,
+  toImageUrl,
 } from '../../api'
 import styles from './index.module.css'
 
@@ -134,13 +135,13 @@ function ListingDetails() {
           <div className={styles.content}>
             <div className={styles.imageSection}>
               <div className={styles.imageGallery}>
-                <img src={listing.images?.[0]} alt={listing.title} className={styles.mainImage} />
+                <img src={toImageUrl(listing.images?.[0])} alt={listing.title} className={styles.mainImage} />
                 {listing.images?.length > 1 && (
                   <div className={styles.thumbnailGrid}>
                     {listing.images.slice(1).map((image, index) => (
                       <img
                         key={index}
-                        src={image}
+                        src={toImageUrl(image)}
                         alt={`${listing.title} ${index + 2}`}
                         className={styles.thumbnail}
                       />
